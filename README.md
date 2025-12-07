@@ -4,9 +4,11 @@ A professional medical transcription application demonstrating AWS Transcribe Me
 
 ## Features
 
-- **Live Voice Transcription**: Record and transcribe medical conversations in real-time
+- **Live Voice Transcription (S3)**: Record and transcribe medical conversations via S3 storage
 - **Audio File Transcription**: Upload and transcribe pre-recorded medical audio files
-- **Multi-Speaker Identification**: Automatically identify and differentiate between multiple speakers
+- **Real-Time Streaming**: Direct streaming transcription without S3 storage
+- **Multi-Speaker Identification**: Automatically identify and differentiate between multiple speakers (Medical transcription only)
+- **Transcription History**: View all saved transcriptions with audio playback
 - **Professional UI**: Clean, minimal interface built with Tailwind CSS and Shadcn UI components
 - **HIPAA-Compliant**: Uses AWS Transcribe Medical for secure medical transcription
 
@@ -51,14 +53,14 @@ AWS_S3_BUCKET=your_s3_bucket_name
 
 ## Usage
 
-### Live Transcription
+### Live Transcription (S3 Storage)
 1. Click "Start Recording" to begin capturing audio
 2. Speak into your microphone (audio is recorded locally)
 3. Click "Stop Recording" to end recording and send for transcription
 4. Wait a few seconds for AWS to process the audio
 5. View the transcribed text with speaker labels
 
-Note: Due to AWS Transcribe Medical API limitations, the "live" transcription processes the entire recording after you stop, rather than streaming word-by-word. Processing typically takes 5-15 seconds depending on audio length.
+Note: This method uses AWS Transcribe Medical with S3 storage. Processing typically takes 5-15 seconds depending on audio length.
 
 ### File Transcription
 1. Click "Select Audio File" to choose an audio file
@@ -66,16 +68,31 @@ Note: Due to AWS Transcribe Medical API limitations, the "live" transcription pr
 3. Wait for processing to complete
 4. View the transcribed text with speaker identification
 
+### Real-Time Streaming
+1. Click "Start Streaming" to begin live transcription
+2. Speak into your microphone
+3. See transcription appear in near real-time (updates every 2 seconds)
+4. Click "Stop Streaming" to end the session
+
+Note: This method uses AWS Transcribe Streaming (not Medical) and sends audio directly without S3 storage. Results appear faster but without medical terminology optimization.
+
+### My Transcriptions
+1. Click "My Transcriptions" in the navigation menu
+2. View all saved transcriptions from S3
+3. Click "Play Audio" to listen to the original recording (if available)
+4. Read the full transcript for each recording
+5. Click "Refresh" to update the list
+
 ## AWS Requirements
 
-- AWS account with Transcribe Medical enabled
-- S3 bucket for temporary audio storage
+- AWS account with Transcribe and Transcribe Medical enabled
+- S3 bucket for temporary audio storage (for Live and File transcription)
 - IAM user with appropriate permissions:
-  - `transcribe:StartMedicalStreamTranscription`
-  - `transcribe:StartMedicalTranscriptionJob`
-  - `transcribe:GetMedicalTranscriptionJob`
-  - `s3:PutObject`
-  - `s3:GetObject`
+  - `transcribe:StartStreamTranscription` (for Real-Time Streaming)
+  - `transcribe:StartMedicalTranscriptionJob` (for Live and File)
+  - `transcribe:GetMedicalTranscriptionJob` (for Live and File)
+  - `s3:PutObject` (for Live and File)
+  - `s3:GetObject` (for Live and File)
 
 ## Project Structure
 
