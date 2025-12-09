@@ -2,9 +2,17 @@
 
 import { useEffect, useState } from "react"
 import { Navigation } from "@/components/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Loader2, Play, FileText, Clock } from "lucide-react"
+import AppLayout from "@cloudscape-design/components/app-layout"
+import ContentLayout from "@cloudscape-design/components/content-layout"
+import Header from "@cloudscape-design/components/header"
+import Container from "@cloudscape-design/components/container"
+import SpaceBetween from "@cloudscape-design/components/space-between"
+import Button from "@cloudscape-design/components/button"
+import Spinner from "@cloudscape-design/components/spinner"
+import Alert from "@cloudscape-design/components/alert"
+import Box from "@cloudscape-design/components/box"
+import Badge from "@cloudscape-design/components/badge"
+import Grid from "@cloudscape-design/components/grid"
 
 interface Transcription {
   id: string
@@ -39,7 +47,9 @@ export default function TranscriptionsPage() {
 
       setTranscriptions(data.transcriptions || [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load transcriptions")
+      setError(
+        err instanceof Error ? err.message : "Failed to load transcriptions"
+      )
       console.error(err)
     } finally {
       setLoading(false)
@@ -55,113 +65,164 @@ export default function TranscriptionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <>
       <Navigation />
+      <AppLayout
+        navigationHide
+        toolsHide
+        contentType="default"
+        content={
+          <ContentLayout
+            header={
+              <Header
+                variant="h1"
+                description="View all your saved transcriptions"
+                actions={
+                  <Button onClick={fetchTranscriptions} iconName="refresh">
+                    Refresh
+                  </Button>
+                }
+              >
+                My Transcriptions
+              </Header>
+            }
+          >
+            {loading && (
+              <Box textAlign="center" padding={{ vertical: "xxl" }}>
+                <Spinner size="large" />
+              </Box>
+            )}
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold text-zinc-900">
-              My Transcriptions
-            </h2>
-            <p className="text-sm text-zinc-600">
-              View all your saved transcriptions
-            </p>
-          </div>
-          <Button onClick={fetchTranscriptions} variant="outline" size="sm">
-            Refresh
-          </Button>
-        </div>
+            {error && <Alert type="error">{error}</Alert>}
 
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
-          </div>
-        )}
+            {!loading && !error && transcriptions.length === 0 && (
+              <Container>
+                <Box textAlign="center" padding={{ vertical: "xxl" }}>
+                  <SpaceBetween size="m">
+                    <Box variant="h2" color="text-status-inactive">
+                      📄
+                    </Box>
+                    <Box variant="p" color="text-body-secondary">
+                      No transcriptions found. Start by creating a
+                      transcription.
+                    </Box>
+                  </SpaceBetween>
+                </Box>
+              </Container>
+            )}
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-4 text-sm text-red-800">
-            {error}
-          </div>
-        )}
-
-        {!loading && !error && transcriptions.length === 0 && (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FileText className="mb-4 h-12 w-12 text-zinc-400" />
-              <p className="text-center text-zinc-600">
-                No transcriptions found. Start by creating a transcription.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {!loading && !error && transcriptions.length > 0 && (
-          <div className="space-y-4">
-            {transcriptions.map((transcription) => (
-              <Card key={transcription.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">
-                        {transcription.type === "live"
-                          ? "Live Recording"
-                          : "File Upload"}
-                      </CardTitle>
-                      <div className="mt-1 flex items-center gap-2 text-sm text-zinc-500">
-                        <Clock className="h-4 w-4" />
-                        {transcription.date}
-                      </div>
-                    </div>
-                    {transcription.audioUrl && (
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            handlePlayAudio(
-                              transcription.audioUrl!,
-                              transcription.id
-                            )
-                          }
-                        >
-                          <Play className="h-4 w-4" />
-                          {playingAudio === transcription.id
-                            ? "Playing"
-                            : "Play Audio"}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {playingAudio === transcription.id &&
-                    transcription.audioUrl && (
-                      <audio
-                        controls
-                        autoPlay
-                        className="w-full"
-                        onEnded={() => setPlayingAudio(null)}
+            {!loading && !error && transcriptions.length > 0 && (
+              <SpaceBetween size="l">
+                {transcriptions.map((transcription) => (
+                  <Container
+                    key={transcription.id}
+                    header={
+                      <Grid
+                        gridDefinition={[
+                          {
+                            colspan: {
+                              default: 12,
+                              xxs: 4,
+                              xs: 4,
+                              s: 6,
+                              m: 8,
+                              l: 8,
+                              xl: 8,
+                            },
+                          },
+                          {
+                            colspan: {
+                              default: 12,
+                              xxs: 4,
+                              xs: 4,
+                              s: 2,
+                              m: 4,
+                              l: 4,
+                              xl: 4,
+                            },
+                          },
+                        ]}
                       >
-                        <source src={transcription.audioUrl} />
-                        Your browser does not support the audio element.
-                      </audio>
-                    )}
+                        <Header variant="h2">
+                          <SpaceBetween
+                            size="xs"
+                            direction="horizontal"
+                            alignItems="center"
+                          >
+                            <Box>
+                              {transcription.type === "live"
+                                ? "Live Recording"
+                                : "File Upload"}
+                            </Box>
+                            <Badge color="blue">{transcription.date}</Badge>
+                          </SpaceBetween>
+                        </Header>
+                        <Box textAlign="right">
+                          {transcription.audioUrl && (
+                            <Button
+                              iconName="play"
+                              onClick={() =>
+                                handlePlayAudio(
+                                  transcription.audioUrl!,
+                                  transcription.id
+                                )
+                              }
+                            >
+                              {playingAudio === transcription.id
+                                ? "Playing"
+                                : "Play Audio"}
+                            </Button>
+                          )}
+                        </Box>
+                      </Grid>
+                    }
+                  >
+                    <SpaceBetween size="m">
+                      {playingAudio === transcription.id &&
+                        transcription.audioUrl && (
+                          <Box>
+                            <audio
+                              controls
+                              autoPlay
+                              style={{ width: "100%", maxWidth: "100%" }}
+                              onEnded={() => setPlayingAudio(null)}
+                            >
+                              <source src={transcription.audioUrl} />
+                              Your browser does not support the audio element.
+                            </audio>
+                          </Box>
+                        )}
 
-                  <div>
-                    <h4 className="mb-2 text-sm font-medium text-zinc-700">
-                      Transcript:
-                    </h4>
-                    <div className="rounded-md bg-zinc-50 p-4 text-sm leading-relaxed text-zinc-900">
-                      {transcription.transcript || "No transcript available"}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </main>
-    </div>
+                      <div>
+                        <Box
+                          variant="awsui-key-label"
+                          padding={{ bottom: "xs" }}
+                        >
+                          Transcript:
+                        </Box>
+                        <div
+                          className="transcript-content"
+                          style={{
+                            padding: "var(--space-m)",
+                            backgroundColor: "var(--color-background-container-content)",
+                            borderRadius: "var(--border-radius-container)",
+                            fontSize: "var(--font-body-m-size)",
+                            lineHeight: "var(--font-body-m-line-height)",
+                            color: "var(--color-text-body-default)",
+                          }}
+                        >
+                          {transcription.transcript ||
+                            "No transcript available"}
+                        </div>
+                      </div>
+                    </SpaceBetween>
+                  </Container>
+                ))}
+              </SpaceBetween>
+            )}
+          </ContentLayout>
+        }
+      />
+    </>
   )
 }

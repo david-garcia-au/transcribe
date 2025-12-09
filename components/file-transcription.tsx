@@ -1,9 +1,13 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Upload, FileAudio, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Container from "@cloudscape-design/components/container"
+import Header from "@cloudscape-design/components/header"
+import SpaceBetween from "@cloudscape-design/components/space-between"
+import Button from "@cloudscape-design/components/button"
+import Textarea from "@cloudscape-design/components/textarea"
+import Alert from "@cloudscape-design/components/alert"
+import Box from "@cloudscape-design/components/box"
 
 export function FileTranscription() {
   const [isProcessing, setIsProcessing] = useState(false)
@@ -12,7 +16,9 @@ export function FileTranscription() {
   const [fileName, setFileName] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -35,7 +41,6 @@ export function FileTranscription() {
       }
 
       const data = await response.json()
-      console.log("File transcription response:", data)
       setTranscript(data.transcript || "No transcript returned")
     } catch (err) {
       setError("Failed to transcribe audio file. Please try again.")
@@ -46,69 +51,55 @@ export function FileTranscription() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Audio File Transcription</CardTitle>
-        <CardDescription>
-          Upload an audio recording for medical transcription
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-col items-center gap-4">
+    <Container
+      header={
+        <Header
+          variant="h2"
+          description="Upload an audio recording for medical transcription"
+        >
+          Audio File Transcription
+        </Header>
+      }
+    >
+      <SpaceBetween size="m">
+        <SpaceBetween size="s">
           <input
             ref={fileInputRef}
             type="file"
             accept="audio/*"
             onChange={handleFileSelect}
-            className="hidden"
+            style={{ display: "none" }}
           />
           <Button
-            size="lg"
-            variant="outline"
+            variant="primary"
+            iconName="upload"
             onClick={() => fileInputRef.current?.click()}
             disabled={isProcessing}
-            className="w-full max-w-xs"
+            loading={isProcessing}
+            fullWidth
           >
-            {isProcessing ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Upload className="h-5 w-5" />
-                Select Audio File
-              </>
-            )}
+            {isProcessing ? "Processing..." : "Select Audio File"}
           </Button>
 
           {fileName && !isProcessing && (
-            <div className="flex items-center gap-2 text-sm text-zinc-600">
-              <FileAudio className="h-4 w-4" />
-              {fileName}
-            </div>
+            <Box textAlign="center" variant="small" color="text-body-secondary">
+              📄 {fileName}
+            </Box>
           )}
-        </div>
+        </SpaceBetween>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-4 text-sm text-red-800">
-            {error}
-          </div>
-        )}
+        {error && <Alert type="error">{error}</Alert>}
 
-        <div className="space-y-2">
-          <label htmlFor="file-transcript" className="block text-sm font-medium text-zinc-700">
-            Transcript:
-          </label>
-          <textarea
-            id="file-transcript"
+        <SpaceBetween size="xs">
+          <Box variant="awsui-key-label">Transcript:</Box>
+          <Textarea
             value={transcript}
             readOnly
             placeholder="Transcript will appear here after processing..."
-            className="w-full min-h-[200px] rounded-md border border-zinc-300 bg-white p-4 text-sm leading-relaxed text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+            rows={10}
           />
-        </div>
-      </CardContent>
-    </Card>
+        </SpaceBetween>
+      </SpaceBetween>
+    </Container>
   )
 }

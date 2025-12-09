@@ -1,52 +1,44 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Stethoscope } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { usePathname, useRouter } from "next/navigation"
+import TopNavigation from "@cloudscape-design/components/top-navigation"
 
 export function Navigation() {
   const pathname = usePathname()
-
-  const links = [
-    { href: "/", label: "Transcribe" },
-    { href: "/transcriptions", label: "My Transcriptions" },
-  ]
+  const router = useRouter()
 
   return (
-    <header className="border-b border-zinc-200 bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <Stethoscope className="h-8 w-8 text-zinc-900" />
-            <div>
-              <h1 className="text-2xl font-semibold text-zinc-900">
-                AWS Transcribe Medical
-              </h1>
-              <p className="text-sm text-zinc-600">
-                Medical transcription proof of concept
-              </p>
-            </div>
-          </Link>
-
-          <nav className="flex gap-1">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "rounded-md px-4 py-2 text-sm font-medium transition-colors",
-                  pathname === link.href
-                    ? "bg-zinc-900 text-white"
-                    : "text-zinc-700 hover:bg-zinc-100"
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </div>
-    </header>
+    <TopNavigation
+      identity={{
+        href: "/",
+        title: "AWS Transcribe Medical",
+        logo: {
+          src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23232f3e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 2a2 2 0 0 0-2 2v5H4a2 2 0 0 0-2 2v2c0 1.1.9 2 2 2h5v5c0 1.1.9 2 2 2h2a2 2 0 0 0 2-2v-5h5a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-5V4a2 2 0 0 0-2-2h-2z'/%3E%3C/svg%3E",
+          alt: "Medical",
+        },
+      }}
+      utilities={[
+        {
+          type: "button",
+          text: "Transcribe",
+          iconName: "microphone",
+          onClick: () => router.push("/"),
+          variant: pathname === "/" ? "primary-button" : undefined,
+        },
+        {
+          type: "button",
+          text: "My Transcriptions",
+          iconName: "folder",
+          onClick: () => router.push("/transcriptions"),
+          variant: pathname === "/transcriptions" ? "primary-button" : undefined,
+        },
+      ]}
+      i18nStrings={{
+        overflowMenuTriggerText: "Menu",
+        overflowMenuTitleText: "Navigation",
+        overflowMenuBackIconAriaLabel: "Back",
+        overflowMenuDismissIconAriaLabel: "Close",
+      }}
+    />
   )
 }

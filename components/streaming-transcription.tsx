@@ -1,15 +1,14 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Radio, Square, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import Container from "@cloudscape-design/components/container"
+import Header from "@cloudscape-design/components/header"
+import SpaceBetween from "@cloudscape-design/components/space-between"
+import Button from "@cloudscape-design/components/button"
+import Textarea from "@cloudscape-design/components/textarea"
+import Alert from "@cloudscape-design/components/alert"
+import Spinner from "@cloudscape-design/components/spinner"
+import Box from "@cloudscape-design/components/box"
 
 export function StreamingTranscription() {
   const [isStreaming, setIsStreaming] = useState(false)
@@ -26,7 +25,6 @@ export function StreamingTranscription() {
 
   useEffect(() => {
     return () => {
-      // Cleanup on unmount
       stopStreaming()
     }
   }, [])
@@ -41,7 +39,6 @@ export function StreamingTranscription() {
       isStreamingRef.current = true
       sessionIdRef.current = `stream-${Date.now()}`
 
-      // Get microphone access
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
@@ -52,7 +49,6 @@ export function StreamingTranscription() {
       })
       streamRef.current = stream
 
-      // Create AudioContext
       const audioContext = new AudioContext({ sampleRate: 16000 })
       audioContextRef.current = audioContext
 
@@ -62,18 +58,14 @@ export function StreamingTranscription() {
 
       setIsStreaming(true)
 
-      // Collect audio chunks
       processor.onaudioprocess = (e) => {
         if (isStreamingRef.current) {
           const inputData = e.inputBuffer.getChannelData(0)
-
-          // Convert to 16-bit PCM
           const pcmData = new Int16Array(inputData.length)
           for (let i = 0; i < inputData.length; i++) {
             const s = Math.max(-1, Math.min(1, inputData[i]))
             pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7fff
           }
-
           audioChunksRef.current.push(pcmData)
           allAudioChunksRef.current.push(new Int16Array(pcmData))
         }
@@ -82,14 +74,12 @@ export function StreamingTranscription() {
       source.connect(processor)
       processor.connect(audioContext.destination)
 
-      // Send chunks periodically (every 2 seconds)
       const intervalId = setInterval(async () => {
         if (audioChunksRef.current.length > 0 && isStreamingRef.current) {
           await sendAudioChunks()
         }
       }, 2000)
 
-      // Store interval ID for cleanup
       ;(processor as any).intervalId = intervalId
     } catch (err) {
       setError("Failed to access microphone. Please check permissions.")
@@ -102,7 +92,6 @@ export function StreamingTranscription() {
     if (audioChunksRef.current.length === 0) return
 
     try {
-      // Combine chunks
       const totalLength = audioChunksRef.current.reduce(
         (acc, chunk) => acc + chunk.length,
         0
@@ -114,12 +103,8 @@ export function StreamingTranscription() {
         offset += chunk.length
       }
 
-      // Clear chunks
       audioChunksRef.current = []
 
-      console.log("Sending audio chunk, size:", combinedData.length)
-
-      // Send to API
       const response = await fetch("/api/transcribe/stream", {
         method: "POST",
         body: combinedData.buffer,
@@ -178,48 +163,40 @@ export function StreamingTranscription() {
     isStreamingRef.current = false
     setIsStreaming(false)
 
-    // Send any remaining chunks
     if (audioChunksRef.current.length > 0) {
       await sendAudioChunks()
     }
 
-    // Clear interval
     if (processorRef.current && (processorRef.current as any).intervalId) {
       clearInterval((processorRef.current as any).intervalId)
     }
 
-    // Stop processor
     if (processorRef.current) {
       processorRef.current.disconnect()
       processorRef.current = null
     }
 
-    // Stop all tracks
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop())
       streamRef.current = null
     }
 
-    // Close audio context
     if (audioContextRef.current) {
       await audioContextRef.current.close()
       audioContextRef.current = null
     }
 
-    // Save to S3
     await saveToS3()
   }
 
   const saveToS3 = async () => {
     if (allAudioChunksRef.current.length === 0 || !transcript) {
-      console.log("No audio or transcript to save")
       return
     }
 
     try {
       setPartialTranscript("Saving to S3...")
 
-      // Combine all audio chunks
       const totalLength = allAudioChunksRef.current.reduce(
         (acc, chunk) => acc + chunk.length,
         0
@@ -231,11 +208,9 @@ export function StreamingTranscription() {
         offset += chunk.length
       }
 
-      // Create WAV file
       const wavBuffer = createWavFile(combinedData, 16000)
       const wavBlob = new Blob([wavBuffer], { type: "audio/wav" })
 
-      // Send to save API
       const formData = new FormData()
       formData.append("audio", wavBlob, `${sessionIdRef.current}.wav`)
       formData.append("transcript", transcript)
@@ -250,7 +225,6 @@ export function StreamingTranscription() {
         throw new Error("Failed to save to S3")
       }
 
-      console.log("Saved to S3 successfully")
       setPartialTranscript("")
     } catch (err) {
       console.error("Failed to save to S3:", err)
@@ -294,71 +268,54 @@ export function StreamingTranscription() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Real-Time Streaming</CardTitle>
-        <CardDescription>
-          Stream audio directly to AWS Transcribe (no S3 storage)
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex justify-center">
-          <Button
-            size="lg"
-            variant={isStreaming ? "destructive" : "default"}
-            onClick={isStreaming ? stopStreaming : startStreaming}
-            className="w-full max-w-xs"
-          >
-            {isStreaming ? (
-              <>
-                <Square className="h-5 w-5" />
-                Stop Streaming
-              </>
-            ) : (
-              <>
-                <Radio className="h-5 w-5" />
-                Start Streaming
-              </>
-            )}
-          </Button>
-        </div>
+    <Container
+      header={
+        <Header
+          variant="h2"
+          description="Stream audio directly to AWS Transcribe (no S3 storage)"
+        >
+          Real-Time Streaming
+        </Header>
+      }
+    >
+      <SpaceBetween size="m">
+        <Button
+          variant={isStreaming ? "normal" : "primary"}
+          iconName={isStreaming ? "status-stopped" : "status-in-progress"}
+          onClick={isStreaming ? stopStreaming : startStreaming}
+          fullWidth
+        >
+          {isStreaming ? "Stop Streaming" : "Start Streaming"}
+        </Button>
 
         {isStreaming && (
-          <div className="flex items-center justify-center gap-2 text-sm text-zinc-600">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Streaming in real-time...
-          </div>
+          <Box textAlign="center">
+            <SpaceBetween size="xs" direction="horizontal" alignItems="center">
+              <Spinner />
+              <Box variant="span">Streaming in real-time...</Box>
+            </SpaceBetween>
+          </Box>
         )}
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-4 text-sm text-red-800">
-            {error}
-          </div>
-        )}
+        {error && <Alert type="error">{error}</Alert>}
 
-        <div className="space-y-2">
-          <label
-            htmlFor="stream-transcript"
-            className="block text-sm font-medium text-zinc-700"
-          >
-            Live Transcript:
-          </label>
-          <textarea
-            id="stream-transcript"
+        <SpaceBetween size="xs">
+          <Box variant="awsui-key-label">Live Transcript:</Box>
+          <Textarea
             value={
               transcript + (partialTranscript ? ` ${partialTranscript}` : "")
             }
             readOnly
             placeholder="Start streaming to see live transcription..."
-            className="w-full min-h-[200px] rounded-md border border-zinc-300 bg-white p-4 text-sm leading-relaxed text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+            rows={10}
           />
           {partialTranscript && (
-            <p className="text-xs text-zinc-500 italic">
-              Gray text shows partial results (still processing...)
-            </p>
+            <Box variant="small" color="text-status-info">
+              Partial result (still processing...)
+            </Box>
           )}
-        </div>
-      </CardContent>
-    </Card>
+        </SpaceBetween>
+      </SpaceBetween>
+    </Container>
   )
 }
