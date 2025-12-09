@@ -3,10 +3,10 @@ import { S3Client, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/clien
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || "us-east-1",
+  region: process.env.TRANSCRIBE_REGION || "us-east-1",
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+    accessKeyId: process.env.TRANSCRIBE_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.TRANSCRIBE_SECRET_ACCESS_KEY || "",
   },
 })
 
@@ -22,7 +22,7 @@ interface Transcription {
 
 export async function GET() {
   try {
-    const bucketName = process.env.AWS_S3_BUCKET || ""
+    const bucketName = process.env.TRANSCRIBE_S3_BUCKET || ""
 
     if (!bucketName) {
       return NextResponse.json(
